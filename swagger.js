@@ -47,7 +47,10 @@ const option = {
                         type: 'date',
                         example: '1990-01-01'
                     },
-
+                    tick: {
+                        type: 'boolean',
+                        example: false
+                    }
                 },
                     }
                 }
