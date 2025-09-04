@@ -128,4 +128,6 @@ router.post('/login', controller.login);
  */
 router.post('/update-tick', controller.updateTick);
 
+router.get("/get-avatar/:username", controller.getAvatarBinary);
+
 module.exports = router;

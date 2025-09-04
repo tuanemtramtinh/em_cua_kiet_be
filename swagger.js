@@ -1,4 +1,5 @@
 const { version } = require("mongoose");
+const { type } = require("os");
 
 const option = {
     definition:{
@@ -27,9 +28,13 @@ const option = {
                         type: 'string',
                         example: '64adbc2f8ee9c9f1b4d9d4d5'
                     },
-                    username: {
+                    name:{
                         type: 'string',
                         example: 'Nguyen Van A'
+                    },
+                    username: {
+                        type: 'string',
+                        example: 'masadthu123'
                     },
                     email: {
                         type: 'string',
@@ -39,9 +44,17 @@ const option = {
                         type: 'string',
                         example: 'masadthu123'
                     },
-                    phone: {
+                    hobby:{
                         type: 'string',
-                        example: '0123456789'
+                        example: 'Reading, Traveling'
+                    },
+                    sex:{
+                        type: 'string',
+                        example: 'nam',
+                    },
+                    avatar:{
+                        type: 'string',
+                        example: '/avatars/masadthu123/avatar.png'
                     },
                     dob: {
                         type: 'date',

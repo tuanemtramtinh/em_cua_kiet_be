@@ -8,6 +8,8 @@ const swaggerJSDoc = require('swagger-jsdoc');
 const swaggerUi = require('swagger-ui-express');
 const option = require('./swagger');
 const responseHelper = require('./middlewares/response');
+const multer = require('multer');
+const upload = multer();
 
 require('dotenv').config();
 
