@@ -32,6 +32,13 @@ app.use(responseHelper);
 routes(app);
 
 const specs = swaggerJSDoc(option);
+app.set('trust proxy', 1);
+app.get('/openapi.json', (req, res) => {
+  const host = req.get('host');
+  const proto = req.get('x-forwarded-proto') || req.protocol;
+  const dynamic = { ...specs, servers: [{ url: `${proto}://${host}` }] };
+  res.json(dynamic);
+});
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs, { explorer: true }));
 
 
