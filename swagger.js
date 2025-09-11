@@ -14,10 +14,6 @@ const option = {
                 url: 'http://localhost:3000',
                 description: 'Development server'
             },
-            {
-                url: 'https://api.digitalculturalpassport.com',
-                description: 'Production server'
-            }
         ],
         components: {
             schemas: {
