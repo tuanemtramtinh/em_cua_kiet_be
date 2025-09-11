@@ -11,8 +11,9 @@ const userSchema = new mongoose.Schema(
     sex: String,
     dob: Date,
     avatar: String,
+    type: String,
     //Additional information
-    tick: Boolean
+    tick: Boolean,
   },
   {
     timestamps: true,
