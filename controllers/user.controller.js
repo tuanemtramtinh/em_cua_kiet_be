@@ -50,14 +50,12 @@ const assignType = async (req, res) => {
   }
 };
 
-const register = async (req, res) => {
+const updateProfile = async (req, res) => {
   try {
-    // Cấu hình storage động ngay trong controller
     const storage = multer.diskStorage({
       destination: (req, file, cb) => {
-        const username = req.body?.username;
+        const username = req.params.username;
         const uploadPath = path.resolve(process.cwd(), "avatars", username);
-        // tạo thư mục nếu chưa có
         fs.mkdirSync(uploadPath, { recursive: true });
         cb(null, uploadPath);
       },
@@ -66,8 +64,7 @@ const register = async (req, res) => {
         const safeBase = path
           .basename(file.originalname, ext)
           .replace(/\s+/g, "_");
-        const uniqueName = `${Date.now()}-${safeBase}${ext}`;
-        cb(null, uniqueName);
+        cb(null, `${Date.now()}-${safeBase}${ext}`);
       },
     });
 
@@ -80,58 +77,83 @@ const register = async (req, res) => {
       cb(null, true);
     };
 
-    const upload = multer({
-      storage,
-      fileFilter,
-    }).single("avatar");
+    const upload = multer({ storage, fileFilter }).single("avatar");
+
     upload(req, res, async (err) => {
-      if (err) {
-        return res.badRequest(err.message);
-      }
+      if (err) return res.badRequest({err});
 
       try {
-        const { name, username, password, email, hobby, dob, sex } = req.body;
+        const username = req.params.username;
+        const { hobby, name, dob, email, sex, password } = req.body;
 
-        // Validate tối thiểu
-        if (!username || !password || !email) {
-          return res.badRequest("Thiếu username/password/email");
+        const user = await User.findOne({ username });
+        if (!user) return res.badRequest("User not found");
+
+        // Nếu có file mới
+        if (req.file) {
+          // (tuỳ chọn) xoá ảnh cũ
+          if (user.avatar) {
+            try {
+              fs.unlinkSync(path.resolve(process.cwd(), user.avatar));
+            } catch {}
+          }
+          user.avatar = path.relative(process.cwd(), req.file.path);
         }
 
-        // Check trùng username
-        const existed = await User.findOne({ username });
-        if (existed) {
-          return res.badRequest("Username already exists");
-        }
+        // Update các field nếu có
+        if (hobby !== undefined) user.hobby = hobby;
+        if (name !== undefined) user.name = name;
+        if (dob !== undefined) user.dob = dob;
+        if (email !== undefined) user.email = email;
+        if (sex !== undefined) user.sex = sex;
+        if (password !== undefined) user.password = password;
 
-        const cryptedPassword = await bcrypt.hash(password, 10);
+        const avatarPath = req.file ? path.relative(process.cwd(), req.file.path) : null;
+        user.avatar = avatarPath;
 
-        // Lưu đường dẫn avatar nếu có
-        const avatarPath = req.file
-          ? path.relative(process.cwd(), req.file.path)
-          : null;
+        await user.save();
 
-        // Tạo user (Mongoose)
-        const newUser = await User.create({
-          name,
-          username,
-          password: cryptedPassword,
-          email,
-          hobby,
-          dob,
-          sex,
-          avatar: avatarPath,
-          tick: false,
-          avatar: avatarPath,
-          type: "khong",
-        });
-
-        return res.success(newUser, "User registered successfully");
+        return res.success("Update profile complete");
       } catch (innerErr) {
-        return res.badRequest(innerErr.message || "Registration failed");
+        return res.badRequest({innerErr});
       }
     });
   } catch (error) {
-    return res.badRequest(error.message || "Registration failed");
+    return res.badRequest({error});
+  }
+};
+
+const register = async (req, res) => {
+  try {
+    const { name, username, password, email, dob, sex } = req.body;
+
+    // Validate tối thiểu
+    if (!username || !password || !email) {
+      return res.badRequest("Thiếu username/password/email");
+    }
+
+    // Check trùng username
+    const existed = await User.findOne({ username });
+    if (existed) {
+      return res.badRequest("Username already exists");
+    }
+
+    const cryptedPassword = await bcrypt.hash(password, 10);
+
+    // Tạo user (Mongoose)
+    const newUser = await User.create({
+      name,
+      username,
+      password: cryptedPassword,
+      email,
+      dob,
+      sex,
+      tick: false,
+      type: "khong",
+    });
+    return res.success(newUser, "User registered successfully");
+  } catch (Err) {
+    return res.badRequest(Err.message || "Registration failed");
   }
 };
 
@@ -223,4 +245,5 @@ module.exports = {
   login,
   updateTick,
   assignType,
+  updateProfile
 };

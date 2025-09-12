@@ -5,13 +5,13 @@ const controller = require("../controllers/user.controller");
  * @swagger
  * /user/register:
  *   post:
- *     summary: Đăng ký người dùng mới (có upload avatar)
+ *     summary: Đăng ký người dùng mới
  *     tags:
  *       - User
  *     requestBody:
  *       required: true
  *       content:
- *         multipart/form-data:
+ *         application/json:   # gửi JSON vì không upload file
  *           schema:
  *             type: object
  *             required:
@@ -33,9 +33,6 @@ const controller = require("../controllers/user.controller");
  *                 type: string
  *                 format: email
  *                 example: nguyenvana@example.com
- *               hobby:
- *                 type: string
- *                 example: Đọc sách
  *               dob:
  *                 type: string
  *                 format: date
@@ -44,9 +41,6 @@ const controller = require("../controllers/user.controller");
  *                 type: string
  *                 enum: [male, female, other]
  *                 example: male
- *               avatar:
- *                 type: string
- *                 format: binary
  *     responses:
  *       200:
  *         description: Người dùng được tạo thành công
@@ -76,18 +70,13 @@ const controller = require("../controllers/user.controller");
  *                     email:
  *                       type: string
  *                       example: nguyenvana@example.com
- *                     hobby:
- *                       type: string
- *                       example: Đọc sách
  *                     dob:
  *                       type: string
+ *                       format: date
  *                       example: 2000-01-01
  *                     sex:
  *                       type: string
  *                       example: male
- *                     avatar:
- *                       type: string
- *                       example: avatars/nguyenvana/1694501200000-avatar.png
  *                     tick:
  *                       type: boolean
  *                       example: false
@@ -338,5 +327,81 @@ router.get("/get-avatar/:username", controller.getAvatarBinary);
  *                   example: User not found
  */
 router.post("/assign-type/:userID", controller.assignType);
+
+/**
+ * @swagger
+ * /user/update-profile/{username}:
+ *   post:
+ *     summary: Cập nhật thông tin hồ sơ người dùng (có thể kèm avatar)
+ *     tags:
+ *       - User
+ *     parameters:
+ *       - in: path
+ *         name: username
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Tên người dùng cần cập nhật
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 example: Nguyễn Văn B
+ *               hobby:
+ *                 type: string
+ *                 example: Đọc sách
+ *               dob:
+ *                 type: string
+ *                 format: date
+ *                 example: 2001-05-20
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: nguyenvanb@example.com
+ *               sex:
+ *                 type: string
+ *                 enum: [male, female, other]
+ *                 example: male
+ *               password:
+ *                 type: string
+ *                 format: password
+ *                 example: newpassword123
+ *               avatar:
+ *                 type: string
+ *                 format: binary
+ *     responses:
+ *       200:
+ *         description: Cập nhật hồ sơ thành công
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: success
+ *                 message:
+ *                   type: string
+ *                   example: Update profile complete
+ *       400:
+ *         description: Lỗi dữ liệu hoặc không tìm thấy user
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: error
+ *                 message:
+ *                   type: string
+ *                   example: User not found
+ */
+router.post("/update-profile/:username", controller.updateProfile);
 
 module.exports = router;
