@@ -159,6 +159,7 @@ const register = async (req, res) => {
     const userData = {
       id: newUser._id,
       username: newUser.username,
+      name: newUser.name,
       email: newUser.email,
       dob: newUser.dob,
       sex: newUser.sex,
