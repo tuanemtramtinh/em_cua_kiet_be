@@ -387,7 +387,38 @@ router.post("/assign-type/:userID", controller.assignType);
  *                   example: success
  *                 message:
  *                   type: string
- *                   example: Update profile complete
+ *                   example: Profile updated successfully
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     message:
+ *                       type: string
+ *                       example: Profile updated successfully
+ *                     user:
+ *                       type: object
+ *                       properties:
+ *                         username:
+ *                           type: string
+ *                           example: Supreme3Bye
+ *                         name:
+ *                           type: string
+ *                           example: Nguyễn Văn B
+ *                         email:
+ *                           type: string
+ *                           example: nguyenvanb@example.com
+ *                         hobby:
+ *                           type: string
+ *                           example: Đọc sách
+ *                         dob:
+ *                           type: string
+ *                           format: date
+ *                           example: 2001-05-20
+ *                         sex:
+ *                           type: string
+ *                           example: male
+ *                         avatar:
+ *                           type: string
+ *                           example: avatars/Supreme3Bye/1726223456789-avatar.webp
  *       400:
  *         description: Lỗi dữ liệu hoặc không tìm thấy user
  *         content:

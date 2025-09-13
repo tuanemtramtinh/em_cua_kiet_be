@@ -113,7 +113,7 @@ const updateProfile = async (req, res) => {
 
         await user.save();
 
-        return res.success("Update profile complete");
+        return res.success({"message": "Profile updated successfully", user: user}, "Profile updated successfully");
       } catch (innerErr) {
         return res.badRequest({innerErr});
       }
