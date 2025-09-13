@@ -80,7 +80,7 @@ const updateProfile = async (req, res) => {
     const upload = multer({ storage, fileFilter }).single("avatar");
 
     upload(req, res, async (err) => {
-      if (err) return res.badRequest({err});
+      if (err) return res.badRequest({ err });
 
       try {
         const username = req.params.username;
@@ -108,18 +108,23 @@ const updateProfile = async (req, res) => {
         if (sex !== undefined) user.sex = sex;
         if (password !== undefined) user.password = password;
 
-        const avatarPath = req.file ? path.relative(process.cwd(), req.file.path) : null;
+        const avatarPath = req.file
+          ? path.relative(process.cwd(), req.file.path)
+          : null;
         user.avatar = avatarPath;
 
         await user.save();
 
-        return res.success({"message": "Profile updated successfully", user: user}, "Profile updated successfully");
+        return res.success(
+          { message: "Profile updated successfully", user: user },
+          "Profile updated successfully"
+        );
       } catch (innerErr) {
-        return res.badRequest({innerErr});
+        return res.badRequest({ innerErr });
       }
     });
   } catch (error) {
-    return res.badRequest({error});
+    return res.badRequest({ error });
   }
 };
 
@@ -151,7 +156,16 @@ const register = async (req, res) => {
       tick: false,
       type: "khong",
     });
-    return res.success(newUser, "User registered successfully");
+    const userData = {
+      id: newUser._id,
+      username: newUser.username,
+      email: newUser.email,
+      dob: newUser.dob,
+      sex: newUser.sex,
+      tick: newUser.tick,
+      type: newUser.type,
+    };
+    return res.success(userData, "User registered successfully");
   } catch (Err) {
     return res.badRequest(Err.message || "Registration failed");
   }
@@ -245,5 +259,5 @@ module.exports = {
   login,
   updateTick,
   assignType,
-  updateProfile
+  updateProfile,
 };

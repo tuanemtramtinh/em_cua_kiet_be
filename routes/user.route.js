@@ -58,7 +58,7 @@ const controller = require("../controllers/user.controller");
  *                 data:
  *                   type: object
  *                   properties:
- *                     _id:
+ *                     id:
  *                       type: string
  *                       example: 64d3c51f5c0a1b2c3d4e5f6a
  *                     name:
