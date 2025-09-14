@@ -32,7 +32,7 @@ const assignType = async (req, res) => {
       type = "Người quan sát";
     } else if (point > 7 && point <= 17) {
       type = "Người kết nối";
-    } else if (point >= 18 && point < 24) {
+    } else if (point >= 18 && point <= 24) {
       type = "Người sáng tạo";
     } else {
       type = "Không hợp lệ";
