@@ -18,6 +18,18 @@ function normalizeDbPath(dbPath) {
   return rel;
 }
 
+const sumType = async (req, res) => {
+  try {
+    const type = req.query.type || "";
+    const query = type ? { type } : {};
+    const count = await User.countDocuments(query);
+    return res.success({ type, count }, "Sum type successfully");
+  } catch (error) {
+    return res.badRequest(error.message || "Sum type failed");
+  }
+};
+
+
 const assignType = async (req, res) => {
   try {
     const { userID } = req.params;
@@ -261,4 +273,5 @@ module.exports = {
   updateTick,
   assignType,
   updateProfile,
+  sumType
 };

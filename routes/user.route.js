@@ -435,4 +435,76 @@ router.post("/assign-type/:userID", controller.assignType);
  */
 router.post("/update-profile/:username", controller.updateProfile);
 
+/**
+ * @swagger
+ * /user/sum-type:
+ *   get:
+ *     summary: Đếm số lượng người dùng theo type (hoặc tất cả nếu không truyền)
+ *     tags:
+ *       - User
+ *     parameters:
+ *       - in: query
+ *         name: type
+ *         required: false
+ *         schema:
+ *           type: string
+ *         description: >
+ *           Giá trị `type` để lọc (ví dụ: "Người quan sát", "Người sáng tạo").
+ *           Bỏ trống để đếm tất cả.
+ *     responses:
+ *       200:
+ *         description: Đếm thành công
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: success
+ *                 message:
+ *                   type: string
+ *                   example: Sum type successfully
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     type:
+ *                       type: string
+ *                       example: Người quan sát
+ *                     count:
+ *                       type: integer
+ *                       example: 42
+ *             examples:
+ *               withType:
+ *                 summary: Có truyền type
+ *                 value:
+ *                   status: success
+ *                   message: Sum type successfully
+ *                   data:
+ *                     type: Người quan sát
+ *                     count: 42
+ *               withoutType:
+ *                 summary: Không truyền type (đếm tất cả)
+ *                 value:
+ *                   status: success
+ *                   message: Sum type successfully
+ *                   data:
+ *                     type: ""
+ *                     count: 187
+ *       400:
+ *         description: Lỗi dữ liệu
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: error
+ *                 message:
+ *                   type: string
+ *                   example: Sum type failed
+ */
+router.get("/sum-type", controller.sumType);
+
 module.exports = router;
