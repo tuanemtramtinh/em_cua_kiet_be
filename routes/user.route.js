@@ -507,4 +507,109 @@ router.post("/update-profile/:username", controller.updateProfile);
  */
 router.get("/sum-type", controller.sumType);
 
+/**
+ * @swagger
+ * /user/list-user:
+ *   get:
+ *     summary: Lấy danh sách người dùng (ẩn trường password)
+ *     tags:
+ *       - User
+ *     responses:
+ *       200:
+ *         description: Lấy danh sách thành công
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: success
+ *                 message:
+ *                   type: string
+ *                   example: List user successfully
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/UserPublic'
+ *             examples:
+ *               ok:
+ *                 summary: Ví dụ phản hồi thành công
+ *                 value:
+ *                   status: success
+ *                   message: List user successfully
+ *                   data:
+ *                     - _id: "64adbc2f8ee9c9f1b4d9d4d5"
+ *                       username: "Supreme3Bye"
+ *                       name: "Nguyễn Văn B"
+ *                       email: "nguyenvanb@example.com"
+ *                       hobby: "Đọc sách"
+ *                       dob: "2001-05-20"
+ *                       sex: "male"
+ *                       type: "student"
+ *                       avatar: "avatars/Supreme3Bye/1726223456789-avatar.webp"
+ *                     - _id: "64adbc2f8ee9c9f1b4d9d4d6"
+ *                       username: "Alice01"
+ *                       name: "Alice"
+ *                       email: "alice@example.com"
+ *                       hobby: "Âm nhạc"
+ *                       dob: "2000-01-15"
+ *                       sex: "female"
+ *                       type: "admin"
+ *                       avatar: "avatars/Alice01/1726223456790-avatar.jpg"
+ *       400:
+ *         description: Lỗi dữ liệu
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: error
+ *                 message:
+ *                   type: string
+ *                   example: List user failed
+ *
+ * components:
+ *   schemas:
+ *     UserPublic:
+ *       type: object
+ *       description: >
+ *         Thông tin người dùng trả về trên API công khai. Trường password đã được loại bỏ.
+ *       properties:
+ *         _id:
+ *           type: string
+ *           description: MongoDB ObjectId
+ *           example: 64adbc2f8ee9c9f1b4d9d4d5
+ *         username:
+ *           type: string
+ *           example: Supreme3Bye
+ *         name:
+ *           type: string
+ *           example: Nguyễn Văn B
+ *         email:
+ *           type: string
+ *           format: email
+ *           example: nguyenvanb@example.com
+ *         hobby:
+ *           type: string
+ *           example: Đọc sách
+ *         dob:
+ *           type: string
+ *           format: date
+ *           example: 2001-05-20
+ *         sex:
+ *           type: string
+ *           enum: [male, female, other]
+ *           example: male
+ *         type:
+ *           type: string
+ *           example: student
+ *         avatar:
+ *           type: string
+ *           example: avatars/Supreme3Bye/1726223456789-avatar.webp
+ */
+router.get("/list-user", controller.listUser);
+
 module.exports = router;

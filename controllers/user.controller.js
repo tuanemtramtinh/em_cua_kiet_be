@@ -29,6 +29,14 @@ const sumType = async (req, res) => {
   }
 };
 
+const listUser = async (req, res) => {
+  try{
+    const users = await User.find().select('-password');
+    return res.success(users, "List user successfully");
+  }catch(error){
+    return res.badRequest(error.message || "List user failed");
+  }
+}
 
 const assignType = async (req, res) => {
   try {
@@ -273,5 +281,6 @@ module.exports = {
   updateTick,
   assignType,
   updateProfile,
-  sumType
+  sumType,
+  listUser
 };
