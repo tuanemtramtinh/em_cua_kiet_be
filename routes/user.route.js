@@ -511,9 +511,27 @@ router.get("/sum-type", controller.sumType);
  * @swagger
  * /user/list-user:
  *   get:
- *     summary: Lấy danh sách người dùng (ẩn trường password)
+ *     summary: Lấy danh sách người dùng (ẩn trường password) có phân trang
  *     tags:
  *       - User
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 1
+ *         required: false
+ *         description: Trang hiện tại (bắt đầu từ 1)
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           maximum: 100
+ *           default: 10
+ *         required: false
+ *         description: Số bản ghi mỗi trang (tối đa 100)
  *     responses:
  *       200:
  *         description: Lấy danh sách thành công
@@ -529,9 +547,33 @@ router.get("/sum-type", controller.sumType);
  *                   type: string
  *                   example: List user successfully
  *                 data:
- *                   type: array
- *                   items:
- *                     $ref: '#/components/schemas/UserPublic'
+ *                   type: object
+ *                   properties:
+ *                     items:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/UserPublic'
+ *                     pagination:
+ *                       type: object
+ *                       properties:
+ *                         page:
+ *                           type: integer
+ *                           example: 1
+ *                         limit:
+ *                           type: integer
+ *                           example: 10
+ *                         total:
+ *                           type: integer
+ *                           example: 187
+ *                         totalPages:
+ *                           type: integer
+ *                           example: 19
+ *                         hasNextPage:
+ *                           type: boolean
+ *                           example: true
+ *                         hasPrevPage:
+ *                           type: boolean
+ *                           example: false
  *             examples:
  *               ok:
  *                 summary: Ví dụ phản hồi thành công
@@ -539,24 +581,32 @@ router.get("/sum-type", controller.sumType);
  *                   status: success
  *                   message: List user successfully
  *                   data:
- *                     - _id: "64adbc2f8ee9c9f1b4d9d4d5"
- *                       username: "Supreme3Bye"
- *                       name: "Nguyễn Văn B"
- *                       email: "nguyenvanb@example.com"
- *                       hobby: "Đọc sách"
- *                       dob: "2001-05-20"
- *                       sex: "male"
- *                       type: "student"
- *                       avatar: "avatars/Supreme3Bye/1726223456789-avatar.webp"
- *                     - _id: "64adbc2f8ee9c9f1b4d9d4d6"
- *                       username: "Alice01"
- *                       name: "Alice"
- *                       email: "alice@example.com"
- *                       hobby: "Âm nhạc"
- *                       dob: "2000-01-15"
- *                       sex: "female"
- *                       type: "admin"
- *                       avatar: "avatars/Alice01/1726223456790-avatar.jpg"
+ *                     items:
+ *                       - _id: "64adbc2f8ee9c9f1b4d9d4d5"
+ *                         username: "Supreme3Bye"
+ *                         name: "Nguyễn Văn B"
+ *                         email: "nguyenvanb@example.com"
+ *                         hobby: "Đọc sách"
+ *                         dob: "2001-05-20"
+ *                         sex: "male"
+ *                         type: "student"
+ *                         avatar: "avatars/Supreme3Bye/1726223456789-avatar.webp"
+ *                       - _id: "64adbc2f8ee9c9f1b4d9d4d6"
+ *                         username: "Alice01"
+ *                         name: "Alice"
+ *                         email: "alice@example.com"
+ *                         hobby: "Âm nhạc"
+ *                         dob: "2000-01-15"
+ *                         sex: "female"
+ *                         type: "admin"
+ *                         avatar: "avatars/Alice01/1726223456790-avatar.jpg"
+ *                     pagination:
+ *                       page: 1
+ *                       limit: 10
+ *                       total: 187
+ *                       totalPages: 19
+ *                       hasNextPage: true
+ *                       hasPrevPage: false
  *       400:
  *         description: Lỗi dữ liệu
  *         content:
@@ -611,5 +661,56 @@ router.get("/sum-type", controller.sumType);
  *           example: avatars/Supreme3Bye/1726223456789-avatar.webp
  */
 router.get("/list-user", controller.listUser);
+
+/**
+ * @swagger
+ * /user/summary:
+ *   get:
+ *     summary: Thống kê số lượng người dùng theo type và tổng số
+ *     tags:
+ *       - User
+ *     responses:
+ *       200:
+ *         description: Lấy thống kê thành công
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: success
+ *                 message:
+ *                   type: string
+ *                   example: Summary users successfully
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     total:
+ *                       type: integer
+ *                       example: 187
+ *                     byType:
+ *                       type: object
+ *                       additionalProperties:
+ *                         type: integer
+ *                       example:
+ *                         Người quan sát: 42
+ *                         Người kết nối: 88
+ *                         Người sáng tạo: 57
+ *       400:
+ *         description: Lỗi dữ liệu
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: error
+ *                 message:
+ *                   type: string
+ *                   example: Summary users failed
+ */
+router.get("/summary", controller.summaryUsers);
 
 module.exports = router;

@@ -30,13 +30,39 @@ const sumType = async (req, res) => {
 };
 
 const listUser = async (req, res) => {
-  try{
-    const users = await User.find().select('-password');
-    return res.success(users, "List user successfully");
-  }catch(error){
+  try {
+    const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
+    const limit = Math.min(
+      Math.max(parseInt(req.query.limit, 10) || 10, 1),
+      100
+    );
+    const skip = (page - 1) * limit;
+
+    const [items, total] = await Promise.all([
+      User.find().select("-password").skip(skip).limit(limit),
+      User.countDocuments({}),
+    ]);
+
+    const totalPages = Math.max(Math.ceil(total / limit), 1);
+
+    return res.success(
+      {
+        items,
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages,
+          hasNextPage: page < totalPages,
+          hasPrevPage: page > 1,
+        },
+      },
+      "List user successfully"
+    );
+  } catch (error) {
     return res.badRequest(error.message || "List user failed");
   }
-}
+};
 
 const assignType = async (req, res) => {
   try {
@@ -274,6 +300,31 @@ const updateTick = async (req, res) => {
   }
 };
 
+const summaryUsers = async (req, res) => {
+  try {
+    const [grouped, total] = await Promise.all([
+      User.aggregate([{ $group: { _id: "$type", count: { $sum: 1 } } }]),
+      User.countDocuments({}),
+    ]);
+
+    const byType = {};
+    for (const g of grouped) {
+      const key = g._id || "unknown";
+      byType[key] = g.count;
+    }
+
+    return res.success(
+      {
+        total,
+        byType,
+      },
+      "Summary users successfully"
+    );
+  } catch (error) {
+    return res.badRequest(error.message || "Summary users failed");
+  }
+};
+
 module.exports = {
   register,
   getAvatarBinary,
@@ -282,5 +333,6 @@ module.exports = {
   assignType,
   updateProfile,
   sumType,
-  listUser
+  listUser,
+  summaryUsers,
 };
