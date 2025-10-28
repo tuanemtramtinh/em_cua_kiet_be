@@ -21,7 +21,9 @@ function normalizeDbPath(dbPath) {
 const sumType = async (req, res) => {
   try {
     const type = req.query.type || "";
-    const query = type ? { type } : {};
+    const query = type
+      ? { type, username: { $ne: "admin" } }
+      : { username: { $ne: "admin" } };
     const count = await User.countDocuments(query);
     return res.success({ type, count }, "Sum type successfully");
   } catch (error) {
@@ -38,9 +40,11 @@ const listUser = async (req, res) => {
     );
     const skip = (page - 1) * limit;
 
+    const baseFilter = { username: { $ne: "admin" } };
+
     const [items, total] = await Promise.all([
-      User.find().select("-password").skip(skip).limit(limit),
-      User.countDocuments({}),
+      User.find(baseFilter).select("-password").skip(skip).limit(limit),
+      User.countDocuments(baseFilter),
     ]);
 
     const totalPages = Math.max(Math.ceil(total / limit), 1);
@@ -302,9 +306,13 @@ const updateTick = async (req, res) => {
 
 const summaryUsers = async (req, res) => {
   try {
+    const baseMatch = { username: { $ne: "admin" } };
     const [grouped, total] = await Promise.all([
-      User.aggregate([{ $group: { _id: "$type", count: { $sum: 1 } } }]),
-      User.countDocuments({}),
+      User.aggregate([
+        { $match: baseMatch },
+        { $group: { _id: "$type", count: { $sum: 1 } } },
+      ]),
+      User.countDocuments(baseMatch),
     ]);
 
     const byType = {};
