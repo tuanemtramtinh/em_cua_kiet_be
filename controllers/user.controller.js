@@ -39,8 +39,14 @@ const listUser = async (req, res) => {
       100
     );
     const skip = (page - 1) * limit;
+    const type = req.query.type || "";
 
     const baseFilter = { username: { $ne: "admin" } };
+    
+    // Thêm filter theo type nếu có
+    if (type) {
+      baseFilter.type = type;
+    }
 
     const [items, total] = await Promise.all([
       User.find(baseFilter).select("-password").skip(skip).limit(limit),
