@@ -5,6 +5,7 @@ const path = require("path");
 const fs = require("fs");
 const { fileURLToPath } = require("url");
 const User = require("../models/user.model.js");
+const Image = require("../models/image.model.js");
 const mime = require("mime-types");
 const fsp = require("fs/promises");
 
@@ -42,22 +43,57 @@ const listUser = async (req, res) => {
     const type = req.query.type || "";
 
     const baseFilter = { username: { $ne: "admin" } };
-    
-    // Thêm filter theo type nếu có
-    if (type) {
-      baseFilter.type = type;
-    }
+    if (type) baseFilter.type = type;
 
     const [items, total] = await Promise.all([
-      User.find(baseFilter).select("-password").skip(skip).limit(limit),
+      User.find(baseFilter).select("-password").skip(skip).limit(limit).lean(),
       User.countDocuments(baseFilter),
     ]);
 
-    const totalPages = Math.max(Math.ceil(total / limit), 1);
+    const userIds = items.map((u) => u._id);
 
+    const approvedImages = await Image.aggregate([
+      { $match: { approve: true, userId: { $in: userIds } } },
+      { $group: { _id: "$userId", count: { $sum: 1 } } },
+    ]);
+    const approvedMap = new Map(
+      approvedImages.map((a) => [a._id.toString(), a.count])
+    );
+
+    const imagesAll = await Image.find({ userId: { $in: userIds } })
+      .select("_id userId dir approve createdAt")
+      .lean();
+
+    const imgMap = new Map();
+    for (const img of imagesAll) {
+      const k = img.userId.toString();
+      if (!imgMap.has(k)) imgMap.set(k, []);
+      imgMap.get(k).push({
+        _id: img._id,
+        dir: img.dir,
+        approve: img.approve,
+      });
+    }
+
+    const usersWithApprovalAndImages = items.map((u) => {
+      const count = approvedMap.get(u._id.toString()) || 0;
+      return {
+        ...u,
+        approved: count === 2,
+        images: imgMap.get(u._id.toString()) || [],
+      };
+    });
+
+    await Promise.all(
+      usersWithApprovalAndImages.map((u) =>
+        User.updateOne({ _id: u._id }, { $set: { approved: u.approved } })
+      )
+    );
+
+    const totalPages = Math.max(Math.ceil(total / limit), 1);
     return res.success(
       {
-        items,
+        items: usersWithApprovalAndImages,
         pagination: {
           page,
           limit,
@@ -210,6 +246,7 @@ const register = async (req, res) => {
       dob,
       sex,
       tick: false,
+      approved: false,
       type: "khong",
     });
     const userData = {
@@ -220,6 +257,7 @@ const register = async (req, res) => {
       dob: newUser.dob,
       sex: newUser.sex,
       tick: newUser.tick,
+      approved: newUser.approved,
       type: newUser.type,
     };
     return res.success(userData, "User registered successfully");
@@ -236,12 +274,11 @@ const getAvatarBinary = async (req, res) => {
     const relSafe = normalizeDbPath(user.avatar);
     const absPath = path.resolve(AVATAR_ROOT, relSafe);
 
-    // Chống path traversal: absPath phải nằm trong AVATAR_ROOT
     if (path.relative(AVATAR_ROOT, absPath).startsWith("..")) {
       return res.badRequest("Invalid avatar path");
     }
 
-    await fsp.access(absPath, fs.constants.R_OK); // có tồn tại & đọc được?
+    await fsp.access(absPath, fs.constants.R_OK);
 
     const stat = await fsp.stat(absPath);
     res.setHeader(
@@ -339,6 +376,23 @@ const summaryUsers = async (req, res) => {
   }
 };
 
+const getUserInfo = async (req, res) => {
+  try {
+    const { userID } = req.params;
+    const user = await User.findById(userID).select("-password").lean();
+    if (!user) {
+      return res.badRequest("User not found");
+    }
+    const images = await Image.find({ userId: userID }).lean();
+    return res.success(
+      { user, images },
+      `Get ${user.username}'s info successfully`
+    );
+  } catch (error) {
+    return res.badRequest(error.message || "Get user info failed");
+  }
+};
+
 module.exports = {
   register,
   getAvatarBinary,
@@ -349,4 +403,5 @@ module.exports = {
   sumType,
   listUser,
   summaryUsers,
+  getUserInfo,
 };

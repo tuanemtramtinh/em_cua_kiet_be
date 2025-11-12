@@ -114,4 +114,102 @@ const controller = require("../controllers/image.controller");
  */
 router.post("/upload", controller.uploadImages);
 
+/**
+ * @swagger
+ * /image/approve/{imageId}:
+ *   post:
+ *     summary: Duyệt hoặc từ chối ảnh
+ *     description: |
+ *       - Nếu `approve = true`: đặt cờ duyệt cho ảnh có id tương ứng.
+ *       - Nếu `approve = false`: xóa **tất cả ảnh** của user sở hữu ảnh đó (trong cơ sở dữ liệu).
+ *     tags:
+ *       - Image
+ *     parameters:
+ *       - in: path
+ *         name: imageId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID của ảnh cần duyệt / từ chối
+ *         example: 67331a7e6fdc530adfe5f310
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - approve
+ *             properties:
+ *               approve:
+ *                 type: boolean
+ *                 description: true = duyệt ảnh; false = xóa toàn bộ ảnh thuộc user sở hữu ảnh này
+ *                 example: true
+ *     responses:
+ *       200:
+ *         description: Thao tác thành công
+ *         content:
+ *           application/json:
+ *             oneOf:
+ *               - schema:
+ *                   type: object
+ *                   properties:
+ *                     message:
+ *                       type: string
+ *                       example: Duyệt ảnh thành công
+ *               - schema:
+ *                   type: object
+ *                   properties:
+ *                     message:
+ *                       type: string
+ *                       example: Xoá hai ảnh không được duyệt thành công
+ *       400:
+ *         description: Lỗi dữ liệu / xử lý thất bại
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   examples:
+ *                     InvalidId:
+ *                       value: Invalid image id
+ *                     NotFound:
+ *                       value: Image not found
+ *                     Unknown:
+ *                       value: Approve failed
+ */
+router.post("/approve/:imageId", controller.imageApprove);
+
+/**
+ * @swagger
+ * /image/get-images/{imageId}:
+ *   get:
+ *     summary: Lấy ảnh (binary) theo imageId
+ *     tags: [Image]
+ *     parameters:
+ *       - in: path
+ *         name: imageId
+ *         required: true
+ *         schema: { type: string }
+ *         description: ObjectId của ảnh
+ *         example: 6914b2eda7c46dab561dec8c
+ *     responses:
+ *       200:
+ *         description: Ảnh binary stream
+ *         content:
+ *           image/jpeg:
+ *             schema: { type: string, format: binary }
+ *           image/png:
+ *             schema: { type: string, format: binary }
+ *           image/webp:
+ *             schema: { type: string, format: binary }
+ *       404:
+ *         description: Không tìm thấy ảnh
+ *       400:
+ *         description: Lỗi dữ liệu / path không hợp lệ
+ */
+router.get("/get-images/:imageId", controller.getImageBinary);
+
 module.exports = router;

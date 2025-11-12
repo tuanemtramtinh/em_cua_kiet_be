@@ -14,6 +14,7 @@ const userSchema = new mongoose.Schema(
     type: String,
     //Additional information
     tick: Boolean,
+    approved: Boolean,
   },
   {
     timestamps: true,

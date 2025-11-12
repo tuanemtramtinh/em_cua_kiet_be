@@ -713,4 +713,95 @@ router.get("/list-user", controller.listUser);
  */
 router.get("/summary", controller.summaryUsers);
 
+/**
+ * @swagger
+ * /user/info/{userID}:
+ *   get:
+ *     summary: Lấy thông tin người dùng và danh sách ảnh của họ
+ *     description: |
+ *       Trả về thông tin chi tiết của người dùng (ẩn mật khẩu) cùng toàn bộ các ảnh mà người đó đã tải lên.
+ *       - Sử dụng `userID` để truy vấn người dùng trong cơ sở dữ liệu.
+ *       - Danh sách ảnh bao gồm cả ảnh đã duyệt và chưa duyệt.
+ *     tags:
+ *       - User
+ *     parameters:
+ *       - in: path
+ *         name: userID
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID của người dùng cần lấy thông tin
+ *         example: 68c5633492e636d0a792d12d
+ *     responses:
+ *       200:
+ *         description: Lấy thông tin thành công
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: success
+ *                 message:
+ *                   type: string
+ *                   example: Get tuanemtramtinh's info successfully
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     user:
+ *                       type: object
+ *                       description: Thông tin người dùng (ẩn mật khẩu)
+ *                       properties:
+ *                         _id:
+ *                           type: string
+ *                           example: 68c5633492e636d0a792d12d
+ *                         username:
+ *                           type: string
+ *                           example: tuanemtramtinh
+ *                         type:
+ *                           type: string
+ *                           example: Người sáng tạo
+ *                         approved:
+ *                           type: boolean
+ *                           example: true
+ *                         createdAt:
+ *                           type: string
+ *                           format: date-time
+ *                           example: 2025-11-12T10:20:30.000Z
+ *                     images:
+ *                       type: array
+ *                       description: Danh sách ảnh của người dùng
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           _id:
+ *                             type: string
+ *                             example: 6914b2eda7c46dab561dec8c
+ *                           dir:
+ *                             type: string
+ *                             example: images/tuanemtramtinh/1762964205470-answerquestionsequence_0.jpg
+ *                           approve:
+ *                             type: boolean
+ *                             example: false
+ *                           createdAt:
+ *                             type: string
+ *                             format: date-time
+ *                             example: 2025-11-12T11:00:00.000Z
+ *       400:
+ *         description: Lỗi dữ liệu / không tìm thấy người dùng
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: error
+ *                 message:
+ *                   type: string
+ *                   example: User not found
+ */
+router.get("/info/:userID", controller.getUserInfo);
+
 module.exports = router;

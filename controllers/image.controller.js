@@ -5,12 +5,13 @@ const fsp = require("fs/promises");
 const sharp = require("sharp");
 const User = require("../models/user.model.js");
 const Image = require("../models/image.model.js");
+const mime = require("mime-types");
 
 const uploadMany = multer({
   storage: multer.memoryStorage(),
   limits: {
-    files: 12,
-    fileSize: 10 * 1024 * 1024,
+    files: 2,
+    fileSize: 3 * 1024 * 1024,
   },
   fileFilter: (req, file, cb) => {
     const allowed = ["image/jpeg", "image/png", "image/webp"];
@@ -27,6 +28,13 @@ function toSafeBase(originalname) {
     .basename(originalname || "image", ext)
     .replace(/[^a-z0-9-_]/gi, "_")
     .toLowerCase();
+}
+
+const IMAGES_ROOT = path.resolve(process.cwd(), "images");
+
+function isUnder(base, target) {
+  const rel = path.relative(base, target);
+  return !!rel && !rel.startsWith("..") && !path.isAbsolute(rel);
 }
 
 async function uploadImages(req, res) {
@@ -105,4 +113,73 @@ async function uploadImages(req, res) {
   });
 }
 
-module.exports = { uploadImages };
+async function imageApprove(req, res) {
+  try {
+    const { imageId } = req.params;
+    const { approve } = req.body;
+
+    const image = await Image.findById(imageId);
+
+    if (approve === true) {
+      image.approve = true;
+      await image.save();
+      return res.status(200).json({ message: "Duyệt ảnh thành công" });
+    }
+
+    const user = await User.findById(image.userId);
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    const userDir = path.resolve(IMAGES_ROOT, user.username);
+    if (isUnder(IMAGES_ROOT, userDir)) {
+      try {
+        await fsp.rm(userDir, { recursive: true, force: true });
+      } catch (e) {
+        console.warn("Không thể xóa thư mục:", e.message);
+      }
+    }
+
+    await Image.deleteMany({ userId: user._id });
+
+    return res
+      .status(200)
+      .json({ message: `Đã xoá toàn bộ thư mục ảnh của ${user.username}` });
+  } catch (err) {
+    return res.status(400).json({ error: err.message || "Approve failed" });
+  }
+}
+
+async function getImageBinary(req, res) {
+  try {
+    const { imageId } = req.params;
+    const image = await Image.findById(imageId);
+    const absPath = path.isAbsolute(image.dir)
+      ? image.dir
+      : path.resolve(process.cwd(), image.dir);
+
+    if (!isUnder(IMAGES_ROOT, absPath)) {
+      return res.status(400).json({ error: "Invalid image path" });
+    }
+    await fsp.access(absPath, fs.constants.R_OK);
+    const stat = await fsp.stat(absPath);
+
+    const ct = (mime && mime.lookup(absPath)) || undefined;
+    if (ct) res.setHeader("Content-Type", ct);
+    else res.type(path.extname(absPath)); // fallback
+
+    res.setHeader("Content-Length", String(stat.size));
+    res.setHeader("Last-Modified", stat.mtime.toUTCString());
+    res.setHeader("Cache-Control", "public, max-age=86400");
+    res.setHeader(
+      "Content-Disposition",
+      `inline; filename="${path.basename(absPath).replace(/"/g, "")}"`
+    );
+
+    fs.createReadStream(absPath)
+      .on("error", () => res.status(500).end())
+      .pipe(res);
+  } catch (e) {
+    return res.status(400).json({ error: e.message });
+  }
+}
+
+module.exports = { uploadImages, imageApprove, getImageBinary };
