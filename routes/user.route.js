@@ -804,4 +804,94 @@ router.get("/summary", controller.summaryUsers);
  */
 router.get("/info/:userID", controller.getUserInfo);
 
+/**
+ * @swagger
+ * /user/search:
+ *   get:
+ *     summary: Tìm kiếm người dùng theo username, tên hoặc email
+ *     tags:
+ *       - User
+ *     parameters:
+ *       - in: query
+ *         name: q
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Từ khóa tìm kiếm (username, name, hoặc email)
+ *         example: nguyen
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 1
+ *         required: false
+ *         description: Trang hiện tại (bắt đầu từ 1)
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           maximum: 100
+ *           default: 10
+ *         required: false
+ *         description: Số bản ghi mỗi trang (tối đa 100)
+ *       - in: query
+ *         name: type
+ *         schema:
+ *           type: string
+ *         required: false
+ *         description: Lọc theo loại người dùng (tùy chọn)
+ *     responses:
+ *       200:
+ *         description: Tìm kiếm thành công
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: success
+ *                 message:
+ *                   type: string
+ *                   example: Search users successfully
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     items:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/UserPublic'
+ *                     pagination:
+ *                       type: object
+ *                       properties:
+ *                         page:
+ *                           type: integer
+ *                         limit:
+ *                           type: integer
+ *                         total:
+ *                           type: integer
+ *                         totalPages:
+ *                           type: integer
+ *                         hasNextPage:
+ *                           type: boolean
+ *                         hasPrevPage:
+ *                           type: boolean
+ *       400:
+ *         description: Lỗi dữ liệu hoặc thiếu query
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: error
+ *                 message:
+ *                   type: string
+ *                   example: Search query is required
+ */
+router.get("/search", controller.searchUsers);
+
 module.exports = router;

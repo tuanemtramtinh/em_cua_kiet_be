@@ -119,16 +119,33 @@ async function imageApprove(req, res) {
     const { approve } = req.body;
 
     const image = await Image.findById(imageId);
-
-    if (approve === true) {
-      image.approve = true;
-      await image.save();
-      return res.status(200).json({ message: "Duyệt ảnh thành công" });
+    if (!image) {
+      return res.status(404).json({ error: "Image not found" });
     }
 
     const user = await User.findById(image.userId);
     if (!user) return res.status(404).json({ error: "User not found" });
 
+    if (approve === true) {
+      image.approve = true;
+      await image.save();
+
+      // Kiểm tra xem user có 2 ảnh đã được approve chưa
+      const approvedCount = await Image.countDocuments({
+        userId: user._id,
+        approve: true,
+      });
+
+      // Nếu có đủ 2 ảnh đã duyệt thì cập nhật User.approved = true
+      if (approvedCount >= 2) {
+        user.approved = true;
+        await user.save();
+      }
+
+      return res.status(200).json({ message: "Duyệt ảnh thành công" });
+    }
+
+    // approve === false: từ chối và xóa ảnh
     const userDir = path.resolve(IMAGES_ROOT, user.username);
     if (isUnder(IMAGES_ROOT, userDir)) {
       try {
@@ -139,6 +156,10 @@ async function imageApprove(req, res) {
     }
 
     await Image.deleteMany({ userId: user._id });
+
+    // Cập nhật User.approved = false
+    user.approved = false;
+    await user.save();
 
     return res
       .status(200)

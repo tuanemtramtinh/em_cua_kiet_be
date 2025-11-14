@@ -41,26 +41,24 @@ const listUser = async (req, res) => {
     );
     const skip = (page - 1) * limit;
     const type = req.query.type || "";
+    const approvalStatus = req.query.approvalStatus || "";
 
     const baseFilter = { username: { $ne: "admin" } };
     if (type) baseFilter.type = type;
 
-    const [items, total] = await Promise.all([
-      User.find(baseFilter).select("-password").skip(skip).limit(limit).lean(),
-      User.countDocuments(baseFilter),
-    ]);
-
-    const userIds = items.map((u) => u._id);
+    // Lấy tất cả users để filter theo approvalStatus (cần tính approved và images trước)
+    const allItems = await User.find(baseFilter).select("-password").lean();
+    const allUserIds = allItems.map((u) => u._id);
 
     const approvedImages = await Image.aggregate([
-      { $match: { approve: true, userId: { $in: userIds } } },
+      { $match: { approve: true, userId: { $in: allUserIds } } },
       { $group: { _id: "$userId", count: { $sum: 1 } } },
     ]);
     const approvedMap = new Map(
       approvedImages.map((a) => [a._id.toString(), a.count])
     );
 
-    const imagesAll = await Image.find({ userId: { $in: userIds } })
+    const imagesAll = await Image.find({ userId: { $in: allUserIds } })
       .select("_id userId dir approve createdAt")
       .lean();
 
@@ -75,25 +73,37 @@ const listUser = async (req, res) => {
       });
     }
 
-    const usersWithApprovalAndImages = items.map((u) => {
+    let usersWithApprovalAndImages = allItems.map((u) => {
       const count = approvedMap.get(u._id.toString()) || 0;
+      const userImages = imgMap.get(u._id.toString()) || [];
       return {
         ...u,
         approved: count === 2,
-        images: imgMap.get(u._id.toString()) || [],
+        images: userImages,
       };
     });
 
-    await Promise.all(
-      usersWithApprovalAndImages.map((u) =>
-        User.updateOne({ _id: u._id }, { $set: { approved: u.approved } })
-      )
-    );
+    // Filter theo approvalStatus
+    if (approvalStatus) {
+      usersWithApprovalAndImages = usersWithApprovalAndImages.filter((u) => {
+        if (approvalStatus === "Đã duyệt") {
+          return u.approved === true;
+        } else if (approvalStatus === "Chưa duyệt") {
+          return u.approved === false && u.images.length === 2;
+        } else if (approvalStatus === "Chưa tải ảnh") {
+          return u.approved === false && u.images.length === 0;
+        }
+        return true;
+      });
+    }
 
+    // Pagination sau khi filter
+    const total = usersWithApprovalAndImages.length;
+    const paginatedItems = usersWithApprovalAndImages.slice(skip, skip + limit);
     const totalPages = Math.max(Math.ceil(total / limit), 1);
     return res.success(
       {
-        items: usersWithApprovalAndImages,
+        items: paginatedItems,
         pagination: {
           page,
           limit,
@@ -393,6 +403,107 @@ const getUserInfo = async (req, res) => {
   }
 };
 
+const searchUsers = async (req, res) => {
+  try {
+    const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
+    const limit = Math.min(
+      Math.max(parseInt(req.query.limit, 10) || 10, 1),
+      100
+    );
+    const skip = (page - 1) * limit;
+    const searchQuery = req.query.q || "";
+    const type = req.query.type || "";
+    const approvalStatus = req.query.approvalStatus || "";
+
+    if (!searchQuery.trim()) {
+      return res.badRequest("Search query is required");
+    }
+
+    const baseFilter = { username: { $ne: "admin" } };
+    if (type) baseFilter.type = type;
+
+    // Tìm kiếm theo username, name, hoặc email (case-insensitive)
+    const searchRegex = new RegExp(searchQuery.trim(), "i");
+    baseFilter.$or = [
+      { username: searchRegex },
+      { name: searchRegex },
+      { email: searchRegex },
+    ];
+
+    // Lấy tất cả users matching search để filter theo approvalStatus
+    const allItems = await User.find(baseFilter).select("-password").lean();
+    const allUserIds = allItems.map((u) => u._id);
+
+    const approvedImages = await Image.aggregate([
+      { $match: { approve: true, userId: { $in: allUserIds } } },
+      { $group: { _id: "$userId", count: { $sum: 1 } } },
+    ]);
+    const approvedMap = new Map(
+      approvedImages.map((a) => [a._id.toString(), a.count])
+    );
+
+    const imagesAll = await Image.find({ userId: { $in: allUserIds } })
+      .select("_id userId dir approve createdAt")
+      .lean();
+
+    const imgMap = new Map();
+    for (const img of imagesAll) {
+      const k = img.userId.toString();
+      if (!imgMap.has(k)) imgMap.set(k, []);
+      imgMap.get(k).push({
+        _id: img._id,
+        dir: img.dir,
+        approve: img.approve,
+      });
+    }
+
+    let usersWithApprovalAndImages = allItems.map((u) => {
+      const count = approvedMap.get(u._id.toString()) || 0;
+      const userImages = imgMap.get(u._id.toString()) || [];
+      return {
+        ...u,
+        approved: count === 2,
+        images: userImages,
+      };
+    });
+
+    // Filter theo approvalStatus
+    if (approvalStatus) {
+      usersWithApprovalAndImages = usersWithApprovalAndImages.filter((u) => {
+        if (approvalStatus === "Đã duyệt") {
+          return u.approved === true;
+        } else if (approvalStatus === "Chưa duyệt") {
+          return u.approved === false && u.images.length === 2;
+        } else if (approvalStatus === "Chưa tải ảnh") {
+          return u.approved === false && u.images.length === 0;
+        }
+        return true;
+      });
+    }
+
+    // Pagination sau khi filter
+    const total = usersWithApprovalAndImages.length;
+    const paginatedItems = usersWithApprovalAndImages.slice(skip, skip + limit);
+    const totalPages = Math.max(Math.ceil(total / limit), 1);
+    return res.success(
+      {
+        items: paginatedItems,
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages,
+          hasNextPage: page < totalPages,
+          hasPrevPage: page > 1,
+        },
+      },
+      "Search users successfully"
+    );
+  } catch (error) {
+    return res.badRequest(error.message || "Search users failed");
+  }
+};
+
 module.exports = {
   register,
   getAvatarBinary,
@@ -404,4 +515,5 @@ module.exports = {
   listUser,
   summaryUsers,
   getUserInfo,
+  searchUsers,
 };

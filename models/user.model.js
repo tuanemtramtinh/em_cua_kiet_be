@@ -14,7 +14,10 @@ const userSchema = new mongoose.Schema(
     type: String,
     //Additional information
     tick: Boolean,
-    approved: Boolean,
+    approved: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: true,
