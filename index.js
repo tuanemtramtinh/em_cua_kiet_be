@@ -19,37 +19,7 @@ const PORT = process.env.PORT || 3000;
 connectDB();
 
 // Cấu hình CORS chi tiết hơn
-app.use(
-  cors({
-    origin: function (origin, callback) {
-      // Cho phép tất cả origins hoặc chỉ origin cụ thể
-      const allowedOrigins = [
-        "https://khamphabansacso.com",
-        "http://localhost:3000",
-        "http://localhost:5173",
-        "http://localhost:3001",
-      ];
-      // Cho phép requests không có origin (như Postman, mobile apps)
-      if (!origin || allowedOrigins.indexOf(origin) !== -1) {
-        callback(null, true);
-      } else {
-        callback(null, true); // Tạm thời cho phép tất cả, có thể thay bằng callback(new Error("Not allowed by CORS"))
-      }
-    },
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-    allowedHeaders: [
-      "Content-Type",
-      "Authorization",
-      "X-Requested-With",
-      "Accept",
-      "Origin",
-    ],
-    exposedHeaders: ["Content-Range", "X-Content-Range"],
-    preflightContinue: false,
-    optionsSuccessStatus: 204,
-  })
-);
+app.use(cors());
 
 // Xử lý preflight requests một cách rõ ràng
 app.options("*", cors());
