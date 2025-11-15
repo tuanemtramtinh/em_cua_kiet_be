@@ -18,11 +18,7 @@ const PORT = process.env.PORT || 3000;
 
 connectDB();
 
-// Cấu hình CORS chi tiết hơn
 app.use(cors());
-
-// Xử lý preflight requests một cách rõ ràng
-app.options("*", cors());
 
 app.use(morgan("combined"));
 app.use(bodyParser.json());
